@@ -93,7 +93,8 @@ class CustomerCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     // Telefon
-                    if (customer.phone != null) ...[
+                    if (customer.phone != null &&
+                        customer.phone!.trim().isNotEmpty) ...[
                       Row(
                         children: [
                           Icon(
@@ -114,7 +115,8 @@ class CustomerCard extends StatelessWidget {
                       const SizedBox(height: 4),
                     ],
                     // Email
-                    if (customer.email != null)
+                    if (customer.email != null &&
+                        customer.email!.trim().isNotEmpty)
                       Row(
                         children: [
                           Icon(
@@ -136,7 +138,8 @@ class CustomerCard extends StatelessWidget {
                 ),
               ),
               // Telefon Arama İkonu
-              if (customer.phone != null) ...[
+              if (customer.phone != null &&
+                  customer.phone!.trim().isNotEmpty) ...[
                 const SizedBox(width: 12),
                 IconButton(
                   onPressed: () => _makePhoneCall(customer.phone!),

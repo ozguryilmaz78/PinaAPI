@@ -81,7 +81,8 @@ class _CustomerFormPageState extends State<CustomerFormPage> {
                   if (formatted != value) {
                     _firstNameController.value = TextEditingValue(
                       text: formatted,
-                      selection: TextSelection.collapsed(offset: formatted.length),
+                      selection:
+                          TextSelection.collapsed(offset: formatted.length),
                     );
                   }
                 },
@@ -106,7 +107,8 @@ class _CustomerFormPageState extends State<CustomerFormPage> {
                   if (formatted != value) {
                     _lastNameController.value = TextEditingValue(
                       text: formatted,
-                      selection: TextSelection.collapsed(offset: formatted.length),
+                      selection:
+                          TextSelection.collapsed(offset: formatted.length),
                     );
                   }
                 },
@@ -143,7 +145,8 @@ class _CustomerFormPageState extends State<CustomerFormPage> {
                   if (formatted != value) {
                     _emailController.value = TextEditingValue(
                       text: formatted,
-                      selection: TextSelection.collapsed(offset: formatted.length),
+                      selection:
+                          TextSelection.collapsed(offset: formatted.length),
                     );
                   }
                 },
@@ -221,15 +224,9 @@ class _CustomerFormPageState extends State<CustomerFormPage> {
         final updatedCustomer = widget.customer!.copyWith(
           firstName: _firstNameController.text.trim(),
           lastName: _lastNameController.text.trim(),
-          phone: _phoneController.text.trim().isEmpty
-              ? null
-              : _phoneController.text.trim(),
-          email: _emailController.text.trim().isEmpty
-              ? null
-              : _emailController.text.trim(),
-          address: _addressController.text.trim().isEmpty
-              ? null
-              : _addressController.text.trim(),
+          phone: _phoneController.text.trim(),
+          email: _emailController.text.trim(),
+          address: _addressController.text.trim(),
           status: _status,
         );
 
@@ -245,15 +242,9 @@ class _CustomerFormPageState extends State<CustomerFormPage> {
         await provider.createCustomer(
           firstName: _firstNameController.text.trim(),
           lastName: _lastNameController.text.trim(),
-          phone: _phoneController.text.trim().isEmpty
-              ? null
-              : _phoneController.text.trim(),
-          email: _emailController.text.trim().isEmpty
-              ? null
-              : _emailController.text.trim(),
-          address: _addressController.text.trim().isEmpty
-              ? null
-              : _addressController.text.trim(),
+          phone: _phoneController.text.trim(),
+          email: _emailController.text.trim(),
+          address: _addressController.text.trim(),
           status: _status,
         );
 
@@ -287,11 +278,12 @@ class _CustomerFormPageState extends State<CustomerFormPage> {
 
   String _capitalizeWords(String text) {
     if (text.isEmpty) return text;
-    
+
     return text
         .toLowerCase()
         .split(' ')
-        .map((word) => word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : word)
+        .map((word) =>
+            word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : word)
         .join(' ');
   }
 

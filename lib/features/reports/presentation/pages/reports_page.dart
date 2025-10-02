@@ -465,7 +465,9 @@ class _ReportsPageState extends State<ReportsPage> {
       Navigator.pop(context); // PDF dialog'u kapat
 
       final pdfService = PdfService();
-      await pdfService.createAndSharePdfFile(document, 'Müşteri_Listesi');
+      final filePath =
+          await pdfService.createAndSavePdfFile(document, 'Müşteri_Listesi');
+      print('PDF kaydedildi: $filePath');
     } catch (e) {
       Navigator.pop(context); // Loading dialog'u kapat
       _showErrorDialog(context, 'PDF oluşturulurken hata oluştu: $e');
@@ -493,7 +495,9 @@ class _ReportsPageState extends State<ReportsPage> {
       Navigator.pop(context); // PDF dialog'u kapat
 
       final pdfService = PdfService();
-      await pdfService.createAndSharePdfFile(document, 'Aidat_Listesi');
+      final filePath =
+          await pdfService.createAndSavePdfFile(document, 'Aidat_Listesi');
+      print('PDF kaydedildi: $filePath');
     } catch (e) {
       Navigator.pop(context); // Loading dialog'u kapat
       _showErrorDialog(context, 'PDF oluşturulurken hata oluştu: $e');
@@ -522,7 +526,9 @@ class _ReportsPageState extends State<ReportsPage> {
       Navigator.pop(context); // PDF dialog'u kapat
 
       final pdfService = PdfService();
-      await pdfService.createAndSharePdfFile(document, 'Ödeme_Listesi');
+      final filePath =
+          await pdfService.createAndSavePdfFile(document, 'Ödeme_Listesi');
+      print('PDF kaydedildi: $filePath');
     } catch (e) {
       Navigator.pop(context); // Loading dialog'u kapat
       _showErrorDialog(context, 'PDF oluşturulurken hata oluştu: $e');
@@ -583,7 +589,9 @@ class _ReportsPageState extends State<ReportsPage> {
       Navigator.pop(context); // PDF dialog'u kapat
 
       final pdfService = PdfService();
-      await pdfService.createAndSharePdfFile(document, 'Borç_Alacak_Raporu');
+      final filePath =
+          await pdfService.createAndSavePdfFile(document, 'Borç_Alacak_Raporu');
+      print('PDF kaydedildi: $filePath');
     } catch (e) {
       Navigator.pop(context); // Loading dialog'u kapat
       _showErrorDialog(context, 'PDF oluşturulurken hata oluştu: $e');

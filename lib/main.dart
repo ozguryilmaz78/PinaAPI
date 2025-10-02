@@ -7,7 +7,7 @@ import 'features/splash/presentation/pages/splash_page.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   ServiceLocator().init();
-  await ServiceLocator().initializeJsonBin();
+  await ServiceLocator().initializeApi();
   runApp(const PinaAidatApp());
 }
 

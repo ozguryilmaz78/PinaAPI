@@ -3,7 +3,7 @@ import '../../domain/entities/customer.dart';
 
 part 'customer_model.g.dart';
 
-@JsonSerializable()
+@JsonSerializable(fieldRename: FieldRename.snake)
 class CustomerModel extends Customer {
   const CustomerModel({
     required super.id,

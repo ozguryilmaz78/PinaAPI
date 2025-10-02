@@ -58,6 +58,7 @@ dependencies:
   # PDF Generation
   pdf: ^3.10.7
   printing: ^5.12.0
+  google_fonts: ^6.2.1
   
   
   # UUID Generation
@@ -69,11 +70,11 @@ dependencies:
   # File picker for import operations
   file_picker: ^8.0.0+1
   
-  # Share plus for export operations
-  share_plus: ^10.0.2
-  
-  # HTTP requests for JSONBin integration
+  # HTTP requests for API integration
   http: ^1.2.2
+  
+  # PostgreSQL database integration (for mobile only)
+  postgres: ^3.0.2
 
 dev_dependencies:
   flutter_test:

@@ -27,6 +27,15 @@ class _DueFormPageState extends State<DueFormPage> {
   @override
   void initState() {
     super.initState();
+
+    // Müşterileri yükle
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final customerProvider = context.read<CustomerProvider>();
+      if (customerProvider.allCustomers.isEmpty) {
+        customerProvider.loadCustomers();
+      }
+    });
+
     if (widget.due != null) {
       _loadDueData();
     } else {
@@ -60,179 +69,229 @@ class _DueFormPageState extends State<DueFormPage> {
       appBar: AppBar(
         title: Text(widget.due == null ? 'Yeni Tahakkuk' : 'Tahakkuk Düzenle'),
         centerTitle: true,
-        actions: [
-          if (widget.due != null)
-            IconButton(
-              icon: const Icon(Icons.delete),
-              onPressed: () => _showDeleteConfirmation(context),
-            ),
-        ],
       ),
       body: Consumer<CustomerProvider>(
         builder: (context, customerProvider, child) {
-          final customers = customerProvider.allCustomers
-              .where((customer) => customer.status.isActive)
-              .toList();
-
           return Padding(
             padding: const EdgeInsets.all(16),
             child: Form(
               key: _formKey,
               child: ListView(
                 children: [
-// Müşteri Seçimi
-                  SizedBox(
-                    height: 66,
-                    child: CheckboxListTile(
-                      dense: true,
-                      title: Text(
-                        'Müşteri Seçimi (${_selectedCustomerIds.length})',
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                  // Müşteri Bilgisi
+                  if (widget.due != null)
+                    // Düzenleme modu - Büyük müşteri adı
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.blue.shade200),
                       ),
-                      subtitle: Text(
-                        '${customerProvider.allCustomers.where((customer) => customer.status.isActive).length} aktif müşteri',
-                      ),
-                      value: _selectedCustomerIds.length ==
-                          customerProvider.allCustomers
-                              .where((customer) => customer.status.isActive)
-                              .length,
-                      onChanged: (value) {
-                        setState(() {
-                          final activeCustomers = customerProvider.allCustomers
-                              .where((customer) => customer.status.isActive)
-                              .toList()
-                            ..sort((a, b) => '${a.firstName} ${a.lastName}'
-                                .toLowerCase()
-                                .compareTo('${b.firstName} ${b.lastName}'
-                                    .toLowerCase()));
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.person,
+                            size: 40,
+                            color: Colors.blue.shade600,
+                          ),
+                          const SizedBox(height: 12),
+                          Builder(
+                            builder: (context) {
+                              // Seçili müşterinin adını bul
+                              final selectedCustomer = customerProvider
+                                  .allCustomers
+                                  .where((customer) => _selectedCustomerIds
+                                      .contains(customer.id))
+                                  .firstOrNull;
 
-                          if (value == true) {
-                            _selectedCustomerIds =
-                                activeCustomers.map((c) => c.id).toSet();
-                          } else {
-                            _selectedCustomerIds.clear();
-                          }
-                        });
-                      },
-                      secondary: Icon(
-                        Icons.people,
-                        color: _selectedCustomerIds.length ==
-                                customerProvider.allCustomers
-                                    .where(
-                                        (customer) => customer.status.isActive)
-                                    .length
-                            ? Colors.orange
-                            : Colors.blue,
+                              return Text(
+                                selectedCustomer != null
+                                    ? '${selectedCustomer.firstName} ${selectedCustomer.lastName}'
+                                    : 'Müşteri Bulunamadı',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineSmall
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.blue.shade800,
+                                    ),
+                                textAlign: TextAlign.center,
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Bu tahakkuk için seçili müşteri',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: Colors.blue.shade600,
+                                ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    // Yeni tahakkuk modu - Müşteri seçimi
+                    SizedBox(
+                      height: 66,
+                      child: CheckboxListTile(
+                        dense: true,
+                        title: Text(
+                          'Müşteri Seçimi (${_selectedCustomerIds.length})',
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                        ),
+                        subtitle: Text(
+                          '${customerProvider.allCustomers.where((customer) => customer.status.isActive).length} aktif müşteri',
+                        ),
+                        value: _selectedCustomerIds.length ==
+                            customerProvider.allCustomers
+                                .where((customer) => customer.status.isActive)
+                                .length,
+                        onChanged: (value) {
+                          setState(() {
+                            final activeCustomers = customerProvider
+                                .allCustomers
+                                .where((customer) => customer.status.isActive)
+                                .toList()
+                              ..sort((a, b) => '${a.firstName} ${a.lastName}'
+                                  .toLowerCase()
+                                  .compareTo('${b.firstName} ${b.lastName}'
+                                      .toLowerCase()));
+
+                            if (value == true) {
+                              _selectedCustomerIds =
+                                  activeCustomers.map((c) => c.id).toSet();
+                            } else {
+                              _selectedCustomerIds.clear();
+                            }
+                          });
+                        },
+                        secondary: Icon(
+                          Icons.people,
+                          color: _selectedCustomerIds.length ==
+                                  customerProvider.allCustomers
+                                      .where((customer) =>
+                                          customer.status.isActive)
+                                      .length
+                              ? Colors.orange
+                              : Colors.blue,
+                        ),
                       ),
                     ),
-                  ),
 
-                  const SizedBox(height: 8),
+                  // Müşteri Listesi - Sadece yeni tahakkuk modunda
+                  if (widget.due == null) ...[
+                    const SizedBox(height: 8),
+                    Builder(
+                      builder: (context) {
+                        final activeCustomers = customerProvider.allCustomers
+                            .where((customer) => customer.status.isActive)
+                            .toList()
+                          ..sort((a, b) => '${a.firstName} ${a.lastName}'
+                              .toLowerCase()
+                              .compareTo('${b.firstName} ${b.lastName}'
+                                  .toLowerCase()));
 
-                  // Müşteri Listesi
-                  Builder(
-                    builder: (context) {
-                      final activeCustomers = customerProvider.allCustomers
-                          .where((customer) => customer.status.isActive)
-                          .toList()
-                        ..sort((a, b) => '${a.firstName} ${a.lastName}'
-                            .toLowerCase()
-                            .compareTo(
-                                '${b.firstName} ${b.lastName}'.toLowerCase()));
-
-                      return Container(
-                        height: 200,
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade300),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: activeCustomers.isEmpty
-                            ? Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.people_outline,
-                                      size: 48,
-                                      color: Colors.grey[400],
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      'Aktif müşteri bulunamadı',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium
-                                          ?.copyWith(
-                                            color: Colors.grey[600],
-                                          ),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            : ListView.builder(
-                                itemCount: activeCustomers.length,
-                                itemBuilder: (context, index) {
-                                  final customer = activeCustomers[index];
-                                  final isSelected = _selectedCustomerIds
-                                      .contains(customer.id);
-
-                                  return SizedBox(
-                                    height: 48,
-                                    child: CheckboxListTile(
-                                      dense: true,
-                                      value: isSelected,
-                                      onChanged: (value) {
-                                        setState(() {
-                                          if (value == true) {
-                                            _selectedCustomerIds
-                                                .add(customer.id);
-                                          } else {
-                                            _selectedCustomerIds
-                                                .remove(customer.id);
-                                          }
-                                        });
-                                      },
-                                      title: Text(
-                                        '${customer.firstName} ${customer.lastName}',
+                        return Container(
+                          height: 200,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade300),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: activeCustomers.isEmpty
+                              ? Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.people_outline,
+                                        size: 48,
+                                        color: Colors.grey[400],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Aktif müşteri bulunamadı',
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodyMedium
                                             ?.copyWith(
-                                              fontWeight: FontWeight.w500,
+                                              color: Colors.grey[600],
                                             ),
                                       ),
-                                      secondary: Container(
-                                        width: 32,
-                                        height: 32,
-                                        decoration: BoxDecoration(
-                                          color: Colors.orange.withOpacity(0.1),
-                                          borderRadius:
-                                              BorderRadius.circular(16),
+                                    ],
+                                  ),
+                                )
+                              : ListView.builder(
+                                  itemCount: activeCustomers.length,
+                                  itemBuilder: (context, index) {
+                                    final customer = activeCustomers[index];
+                                    final isSelected = _selectedCustomerIds
+                                        .contains(customer.id);
+
+                                    return SizedBox(
+                                      height: 48,
+                                      child: CheckboxListTile(
+                                        dense: true,
+                                        value: isSelected,
+                                        onChanged: (value) {
+                                          setState(() {
+                                            if (value == true) {
+                                              _selectedCustomerIds
+                                                  .add(customer.id);
+                                            } else {
+                                              _selectedCustomerIds
+                                                  .remove(customer.id);
+                                            }
+                                          });
+                                        },
+                                        title: Text(
+                                          '${customer.firstName} ${customer.lastName}',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.w500,
+                                              ),
                                         ),
-                                        child: Center(
-                                          child: Text(
-                                            customer.firstName.isNotEmpty
-                                                ? customer.firstName[0]
-                                                    .toUpperCase()
-                                                : '?',
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.orange,
-                                              fontSize: 12,
+                                        secondary: Container(
+                                          width: 32,
+                                          height: 32,
+                                          decoration: BoxDecoration(
+                                            color:
+                                                Colors.orange.withOpacity(0.1),
+                                            borderRadius:
+                                                BorderRadius.circular(16),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              customer.firstName.isNotEmpty
+                                                  ? customer.firstName[0]
+                                                      .toUpperCase()
+                                                  : '?',
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.orange,
+                                                fontSize: 12,
+                                              ),
                                             ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  );
-                                },
-                              ),
-                      );
-                    },
-                  ),
+                                    );
+                                  },
+                                ),
+                        );
+                      },
+                    ),
+                  ],
 
                   const SizedBox(height: 16),
 
@@ -431,37 +490,5 @@ class _DueFormPageState extends State<DueFormPage> {
         );
       }
     }
-  }
-
-  void _showDeleteConfirmation(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Tahakkuku Sil'),
-        content: const Text('Bu tahakkuku silmek istediğinizden emin misiniz?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('İptal'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await context.read<DueProvider>().deleteDue(widget.due!.id);
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Tahakkuk silindi'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-                Navigator.of(context).pop();
-              }
-            },
-            child: const Text('Sil', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
   }
 }

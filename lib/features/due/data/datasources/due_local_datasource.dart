@@ -1,5 +1,5 @@
 import 'package:uuid/uuid.dart';
-import '../../../../core/services/jsonbin_service.dart';
+import '../../../../core/services/api_service.dart';
 import '../models/due_model.dart';
 import '../../domain/entities/due.dart';
 
@@ -20,15 +20,15 @@ abstract class DueLocalDataSource {
 }
 
 class DueLocalDataSourceImpl implements DueLocalDataSource {
-  final JsonBinService _jsonBinService;
-  static final _uuid = const Uuid();
+  final ApiService _apiService;
+  static const _uuid = Uuid();
 
-  DueLocalDataSourceImpl(this._jsonBinService);
+  DueLocalDataSourceImpl(this._apiService);
 
   @override
   Future<List<DueModel>> getAllDues() async {
-    // JSONBin'den tahakkuk verilerini çek
-    final data = await _jsonBinService.getDues();
+    // PostgreSQL'den tahakkuk verilerini çek
+    final data = await _apiService.getDues();
     return data.map((json) => DueModel.fromJson(json)).toList();
   }
 
@@ -68,10 +68,10 @@ class DueLocalDataSourceImpl implements DueLocalDataSource {
 
   @override
   Future<void> createDue(Due due) async {
-    // JSONBin'e tahakkuk ekle
+    // PostgreSQL'e tahakkuk ekle
     final newDue = DueModel.fromEntity(due).copyWith(id: _uuid.v4());
     final dueData = newDue.toJson();
-    final success = await _jsonBinService.addDue(dueData);
+    final success = await _apiService.addDue(dueData);
     if (!success) {
       throw Exception('Tahakkuk eklenirken hata oluştu');
     }
@@ -79,10 +79,10 @@ class DueLocalDataSourceImpl implements DueLocalDataSource {
 
   @override
   Future<void> updateDue(Due due) async {
-    // JSONBin'de tahakkuk güncelle
+    // PostgreSQL'de tahakkuk güncelle
     final dueModel = DueModel.fromEntity(due);
     final dueData = dueModel.toJson();
-    final success = await _jsonBinService.updateDue(dueData);
+    final success = await _apiService.updateDue(dueData);
     if (!success) {
       throw Exception('Tahakkuk güncellenirken hata oluştu');
     }
@@ -90,8 +90,8 @@ class DueLocalDataSourceImpl implements DueLocalDataSource {
 
   @override
   Future<void> deleteDue(String id) async {
-    // JSONBin'den tahakkuk sil
-    final success = await _jsonBinService.deleteDue(id);
+    // PostgreSQL'den tahakkuk sil
+    final success = await _apiService.deleteDue(id);
     if (!success) {
       throw Exception('Tahakkuk silinirken hata oluştu');
     }
@@ -135,9 +135,9 @@ class DueLocalDataSourceImpl implements DueLocalDataSource {
         status: DueStatus.paid,
         paymentId: paymentId,
       );
-      // JSONBin'de tahakkuk güncelle
+      // PostgreSQL'de tahakkuk güncelle
       final dueData = updatedDue.toJson();
-      final success = await _jsonBinService.updateDue(dueData);
+      final success = await _apiService.updateDue(dueData);
       if (!success) {
         throw Exception('Tahakkuk ödeme olarak işaretlenirken hata oluştu');
       }

@@ -1,5 +1,5 @@
 import '../models/payment_model.dart';
-import '../../../../core/services/jsonbin_service.dart';
+import '../../../../core/services/api_service.dart';
 
 abstract class PaymentLocalDataSource {
   Future<List<PaymentModel>> getAllPayments();
@@ -16,14 +16,14 @@ abstract class PaymentLocalDataSource {
 }
 
 class PaymentLocalDataSourceImpl implements PaymentLocalDataSource {
-  final JsonBinService _jsonBinService;
+  final ApiService _apiService;
 
-  PaymentLocalDataSourceImpl(this._jsonBinService);
+  PaymentLocalDataSourceImpl(this._apiService);
 
   @override
   Future<List<PaymentModel>> getAllPayments() async {
-    // JSONBin'den ödeme verilerini çek
-    final paymentsData = await _jsonBinService.getPayments();
+    // PostgreSQL'den ödeme verilerini çek
+    final paymentsData = await _apiService.getPayments();
     return paymentsData.map((data) => PaymentModel.fromJson(data)).toList();
   }
 
@@ -70,9 +70,9 @@ class PaymentLocalDataSourceImpl implements PaymentLocalDataSource {
 
   @override
   Future<void> createPayment(PaymentModel payment) async {
-    // JSONBin'e ödeme ekle
+    // PostgreSQL'e ödeme ekle
     final paymentData = payment.toJson();
-    final success = await _jsonBinService.addPayment(paymentData);
+    final success = await _apiService.addPayment(paymentData);
     if (!success) {
       throw Exception('Ödeme eklenirken hata oluştu');
     }
@@ -80,9 +80,9 @@ class PaymentLocalDataSourceImpl implements PaymentLocalDataSource {
 
   @override
   Future<void> updatePayment(PaymentModel payment) async {
-    // JSONBin'de ödeme güncelle
+    // PostgreSQL'de ödeme güncelle
     final paymentData = payment.toJson();
-    final success = await _jsonBinService.updatePayment(paymentData);
+    final success = await _apiService.updatePayment(paymentData);
     if (!success) {
       throw Exception('Ödeme güncellenirken hata oluştu');
     }
@@ -90,8 +90,8 @@ class PaymentLocalDataSourceImpl implements PaymentLocalDataSource {
 
   @override
   Future<void> deletePayment(String id) async {
-    // JSONBin'den ödeme sil
-    final success = await _jsonBinService.deletePayment(id);
+    // PostgreSQL'den ödeme sil
+    final success = await _apiService.deletePayment(id);
     if (!success) {
       throw Exception('Ödeme silinirken hata oluştu');
     }

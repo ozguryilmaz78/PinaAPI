@@ -3,7 +3,7 @@ import '../../domain/entities/due.dart';
 
 part 'due_model.g.dart';
 
-@JsonSerializable()
+@JsonSerializable(fieldRename: FieldRename.snake)
 class DueModel extends Due {
   const DueModel({
     required super.id,

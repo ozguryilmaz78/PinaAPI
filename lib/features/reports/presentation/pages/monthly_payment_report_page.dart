@@ -159,8 +159,7 @@ class _MonthlyPaymentReportPageState extends State<MonthlyPaymentReportPage> {
     final totalPayments = _filteredPayments.length;
     final totalAmount = _filteredPayments.fold<double>(
         0.0, (sum, payment) => sum + payment.amount);
-    final pendingDues =
-        _filteredDues.where((due) => due.status == DueStatus.pending).length;
+    final totalDues = _filteredDues.length;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -179,7 +178,7 @@ class _MonthlyPaymentReportPageState extends State<MonthlyPaymentReportPage> {
           Expanded(
             child: _buildSummaryCard(
               context,
-              icon: Icons.account_balance_wallet,
+              icon: Icons.money,
               title: 'Toplam Tutar',
               value: '${totalAmount.toStringAsFixed(0)} ₺',
               color: Colors.blue,
@@ -189,9 +188,9 @@ class _MonthlyPaymentReportPageState extends State<MonthlyPaymentReportPage> {
           Expanded(
             child: _buildSummaryCard(
               context,
-              icon: Icons.pending_actions,
-              title: 'Bekleyen',
-              value: '$pendingDues',
+              icon: Icons.account_balance_wallet,
+              title: 'Toplam Tahakkuk',
+              value: '$totalDues',
               color: Colors.orange,
             ),
           ),

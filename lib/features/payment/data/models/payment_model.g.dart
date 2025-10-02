@@ -8,29 +8,29 @@ part of 'payment_model.dart';
 
 PaymentModel _$PaymentModelFromJson(Map<String, dynamic> json) => PaymentModel(
       id: json['id'] as String,
-      customerId: json['customerId'] as String,
-      customerName: json['customerName'] as String,
+      customerId: json['customer_id'] as String,
+      customerName: json['customer_name'] as String,
       amount: (json['amount'] as num).toDouble(),
       method: $enumDecode(_$PaymentMethodEnumMap, json['method']),
       status: $enumDecode(_$PaymentStatusEnumMap, json['status']),
-      paymentDate: DateTime.parse(json['paymentDate'] as String),
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      paymentDate: DateTime.parse(json['payment_date'] as String),
+      createdAt: DateTime.parse(json['created_at'] as String),
       notes: json['notes'] as String?,
-      referenceNumber: json['referenceNumber'] as String?,
+      referenceNumber: json['reference_number'] as String?,
     );
 
 Map<String, dynamic> _$PaymentModelToJson(PaymentModel instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'customerId': instance.customerId,
-      'customerName': instance.customerName,
+      'customer_id': instance.customerId,
+      'customer_name': instance.customerName,
       'amount': instance.amount,
       'method': _$PaymentMethodEnumMap[instance.method]!,
       'status': _$PaymentStatusEnumMap[instance.status]!,
-      'paymentDate': instance.paymentDate.toIso8601String(),
-      'createdAt': instance.createdAt.toIso8601String(),
+      'payment_date': instance.paymentDate.toIso8601String(),
+      'created_at': instance.createdAt.toIso8601String(),
       'notes': instance.notes,
-      'referenceNumber': instance.referenceNumber,
+      'reference_number': instance.referenceNumber,
     };
 
 const _$PaymentMethodEnumMap = {

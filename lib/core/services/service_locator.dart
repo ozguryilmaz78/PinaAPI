@@ -31,16 +31,14 @@ import '../../features/due/domain/usecases/get_total_due_amount.dart';
 import '../../features/due/domain/usecases/get_total_paid_amount.dart';
 import '../../features/due/domain/usecases/create_monthly_dues.dart';
 import '../../features/due/presentation/providers/due_provider.dart';
-import 'json_storage_service.dart';
-import 'jsonbin_service.dart';
+import 'api_service.dart';
 
 class ServiceLocator {
   static final ServiceLocator _instance = ServiceLocator._internal();
   factory ServiceLocator() => _instance;
   ServiceLocator._internal();
 
-  late final JsonStorageService _jsonStorageService;
-  late final JsonBinService _jsonBinService;
+  late final ApiService _apiService;
   late final CustomerLocalDataSource _customerLocalDataSource;
   late final CustomerRepository _customerRepository;
   late final CreateCustomer _createCustomer;
@@ -77,13 +75,12 @@ class ServiceLocator {
 
   void init() {
     // Core services
-    _jsonStorageService = JsonStorageService();
-    _jsonBinService = JsonBinService();
+    _apiService = ApiService();
 
-    // Data sources - JSONBin kullan
-    _customerLocalDataSource = CustomerLocalDataSourceImpl(_jsonBinService);
-    _paymentLocalDataSource = PaymentLocalDataSourceImpl(_jsonBinService);
-    _dueLocalDataSource = DueLocalDataSourceImpl(_jsonBinService);
+    // Data sources - API üzerinden HTTP servisi kullan
+    _customerLocalDataSource = CustomerLocalDataSourceImpl(_apiService);
+    _paymentLocalDataSource = PaymentLocalDataSourceImpl(_apiService);
+    _dueLocalDataSource = DueLocalDataSourceImpl(_apiService);
 
     // Repositories
     _customerRepository = CustomerRepositoryImpl(_customerLocalDataSource);
@@ -159,11 +156,9 @@ class ServiceLocator {
   CustomerProvider get customerProvider => _customerProvider;
   PaymentProvider get paymentProvider => _paymentProvider;
   DueProvider get dueProvider => _dueProvider;
-  JsonStorageService get jsonStorageService => _jsonStorageService;
-  JsonBinService get jsonBinService => _jsonBinService;
 
-  // JSONBin servisini başlat
-  Future<void> initializeJsonBin() async {
-    await _jsonBinService.initialize();
+  // API servisini başlat
+  Future<void> initializeApi() async {
+    await _apiService.initialize();
   }
 }

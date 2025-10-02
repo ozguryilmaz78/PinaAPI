@@ -3,7 +3,7 @@ import '../../domain/entities/payment.dart';
 
 part 'payment_model.g.dart';
 
-@JsonSerializable()
+@JsonSerializable(fieldRename: FieldRename.snake)
 class PaymentModel extends Payment {
   const PaymentModel({
     required super.id,

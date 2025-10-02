@@ -32,7 +32,10 @@ class _PaymentFormPageState extends State<PaymentFormPage> {
     }
     // Müşteri verilerini yükle
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<CustomerProvider>().loadCustomers();
+      final customerProvider = context.read<CustomerProvider>();
+      if (customerProvider.allCustomers.isEmpty) {
+        customerProvider.loadCustomers();
+      }
     });
   }
 
@@ -58,13 +61,6 @@ class _PaymentFormPageState extends State<PaymentFormPage> {
       appBar: AppBar(
         title: Text(widget.payment == null ? 'Yeni Ödeme' : 'Ödeme Düzenle'),
         centerTitle: true,
-        actions: [
-          if (widget.payment != null)
-            IconButton(
-              icon: const Icon(Icons.delete),
-              onPressed: _showDeleteConfirmation,
-            ),
-        ],
       ),
       body: Consumer2<PaymentProvider, CustomerProvider>(
         builder: (context, paymentProvider, customerProvider, child) {
@@ -80,161 +76,223 @@ class _PaymentFormPageState extends State<PaymentFormPage> {
                 key: _formKey,
                 child: ListView(
                   children: [
-                    // Müşteri Seçimi
-                    SizedBox(
-                      height: 66,
-                      child: CheckboxListTile(
-                        dense: true,
-                        title: Text(
-                          'Müşteri Seçimi (${_selectedCustomerIds.length})',
-                          style:
-                              Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                    // Müşteri Bilgisi
+                    if (widget.payment != null)
+                      // Düzenleme modu - Büyük müşteri adı
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.blue.shade200),
                         ),
-                        subtitle: Text(
-                          '${customerProvider.allCustomers.where((customer) => customer.status.isActive).length} aktif müşteri',
-                        ),
-                        value: _selectedCustomerIds.length ==
-                            customerProvider.allCustomers
-                                .where((customer) => customer.status.isActive)
-                                .length,
-                        onChanged: (value) {
-                          setState(() {
-                            final activeCustomers = customerProvider
-                                .allCustomers
-                                .where((customer) => customer.status.isActive)
-                                .toList()
-                              ..sort((a, b) => '${a.firstName} ${a.lastName}'
-                                  .toLowerCase()
-                                  .compareTo('${b.firstName} ${b.lastName}'
-                                      .toLowerCase()));
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.person,
+                              size: 40,
+                              color: Colors.blue.shade600,
+                            ),
+                            const SizedBox(height: 12),
+                            Builder(
+                              builder: (context) {
+                                // Seçili müşterinin adını bul
+                                final selectedCustomer = customerProvider
+                                    .allCustomers
+                                    .where((customer) => _selectedCustomerIds
+                                        .contains(customer.id))
+                                    .firstOrNull;
 
-                            if (value == true) {
-                              _selectedCustomerIds =
-                                  activeCustomers.map((c) => c.id).toSet();
-                            } else {
-                              _selectedCustomerIds.clear();
-                            }
-                          });
-                        },
-                        secondary: Icon(
-                          Icons.people,
-                          color: _selectedCustomerIds.length ==
-                                  customerProvider.allCustomers
-                                      .where((customer) =>
-                                          customer.status.isActive)
-                                      .length
-                              ? Colors.green
-                              : Colors.blue,
+                                return Text(
+                                  selectedCustomer != null
+                                      ? '${selectedCustomer.firstName} ${selectedCustomer.lastName}'
+                                      : 'Müşteri Bulunamadı',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineSmall
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.blue.shade800,
+                                      ),
+                                  textAlign: TextAlign.center,
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Bu ödeme için seçili müşteri',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: Colors.blue.shade600,
+                                  ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      // Yeni ödeme modu - Müşteri seçimi
+                      SizedBox(
+                        height: 66,
+                        child: CheckboxListTile(
+                          dense: true,
+                          title: Text(
+                            'Müşteri Seçimi (${_selectedCustomerIds.length})',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                          subtitle: Text(
+                            '${customerProvider.allCustomers.where((customer) => customer.status.isActive).length} aktif müşteri',
+                          ),
+                          value: _selectedCustomerIds.length ==
+                              customerProvider.allCustomers
+                                  .where((customer) => customer.status.isActive)
+                                  .length,
+                          onChanged: (value) {
+                            setState(() {
+                              final activeCustomers = customerProvider
+                                  .allCustomers
+                                  .where((customer) => customer.status.isActive)
+                                  .toList()
+                                ..sort((a, b) => '${a.firstName} ${a.lastName}'
+                                    .toLowerCase()
+                                    .compareTo('${b.firstName} ${b.lastName}'
+                                        .toLowerCase()));
+
+                              if (value == true) {
+                                _selectedCustomerIds =
+                                    activeCustomers.map((c) => c.id).toSet();
+                              } else {
+                                _selectedCustomerIds.clear();
+                              }
+                            });
+                          },
+                          secondary: Icon(
+                            Icons.people,
+                            color: _selectedCustomerIds.length ==
+                                    customerProvider.allCustomers
+                                        .where((customer) =>
+                                            customer.status.isActive)
+                                        .length
+                                ? Colors.green
+                                : Colors.blue,
+                          ),
                         ),
                       ),
-                    ),
 
-                    const SizedBox(height: 8),
+                    // Müşteri Listesi - Sadece yeni ödeme modunda
+                    if (widget.payment == null) ...[
+                      const SizedBox(height: 8),
+                      Builder(
+                        builder: (context) {
+                          final activeCustomers = customerProvider.allCustomers
+                              .where((customer) => customer.status.isActive)
+                              .toList()
+                            ..sort((a, b) => '${a.firstName} ${a.lastName}'
+                                .toLowerCase()
+                                .compareTo('${b.firstName} ${b.lastName}'
+                                    .toLowerCase()));
 
-                    // Müşteri Listesi
-                    Builder(
-                      builder: (context) {
-                        final activeCustomers = customerProvider.allCustomers
-                            .where((customer) => customer.status.isActive)
-                            .toList()
-                          ..sort((a, b) => '${a.firstName} ${a.lastName}'
-                              .toLowerCase()
-                              .compareTo('${b.firstName} ${b.lastName}'
-                                  .toLowerCase()));
-
-                        return Container(
-                          height: 200,
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey.shade300),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: activeCustomers.isEmpty
-                              ? Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.people_outline,
-                                        size: 48,
-                                        color: Colors.grey[400],
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        'Aktif müşteri bulunamadı',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyMedium
-                                            ?.copyWith(
-                                              color: Colors.grey[600],
-                                            ),
-                                      ),
-                                    ],
-                                  ),
-                                )
-                              : ListView.builder(
-                                  itemCount: activeCustomers.length,
-                                  itemBuilder: (context, index) {
-                                    final customer = activeCustomers[index];
-                                    final isSelected = _selectedCustomerIds
-                                        .contains(customer.id);
-
-                                    return SizedBox(
-                                      height: 48,
-                                      child: CheckboxListTile(
-                                        dense: true,
-                                        value: isSelected,
-                                        onChanged: (value) {
-                                          setState(() {
-                                            if (value == true) {
-                                              _selectedCustomerIds
-                                                  .add(customer.id);
-                                            } else {
-                                              _selectedCustomerIds
-                                                  .remove(customer.id);
-                                            }
-                                          });
-                                        },
-                                        title: Text(
-                                          '${customer.firstName} ${customer.lastName}',
+                          return Container(
+                            height: 200,
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey.shade300),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: activeCustomers.isEmpty
+                                ? Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.people_outline,
+                                          size: 48,
+                                          color: Colors.grey[400],
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Aktif müşteri bulunamadı',
                                           style: Theme.of(context)
                                               .textTheme
                                               .bodyMedium
                                               ?.copyWith(
-                                                fontWeight: FontWeight.w500,
+                                                color: Colors.grey[600],
                                               ),
                                         ),
-                                        secondary: Container(
-                                          width: 32,
-                                          height: 32,
-                                          decoration: BoxDecoration(
-                                            color:
-                                                Colors.green.withOpacity(0.1),
-                                            borderRadius:
-                                                BorderRadius.circular(16),
+                                      ],
+                                    ),
+                                  )
+                                : ListView.builder(
+                                    itemCount: activeCustomers.length,
+                                    itemBuilder: (context, index) {
+                                      final customer = activeCustomers[index];
+                                      final isSelected = _selectedCustomerIds
+                                          .contains(customer.id);
+
+                                      return SizedBox(
+                                        height: 48,
+                                        child: CheckboxListTile(
+                                          dense: true,
+                                          value: isSelected,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              if (value == true) {
+                                                _selectedCustomerIds
+                                                    .add(customer.id);
+                                              } else {
+                                                _selectedCustomerIds
+                                                    .remove(customer.id);
+                                              }
+                                            });
+                                          },
+                                          title: Text(
+                                            '${customer.firstName} ${customer.lastName}',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyMedium
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.w500,
+                                                ),
                                           ),
-                                          child: Center(
-                                            child: Text(
-                                              customer.firstName.isNotEmpty
-                                                  ? customer.firstName[0]
-                                                      .toUpperCase()
-                                                  : '?',
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.green,
-                                                fontSize: 12,
+                                          secondary: Container(
+                                            width: 32,
+                                            height: 32,
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  Colors.green.withOpacity(0.1),
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
+                                            ),
+                                            child: Center(
+                                              child: Text(
+                                                customer.firstName.isNotEmpty
+                                                    ? customer.firstName[0]
+                                                        .toUpperCase()
+                                                    : '?',
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.green,
+                                                  fontSize: 12,
+                                                ),
                                               ),
                                             ),
                                           ),
                                         ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                        );
-                      },
-                    ),
+                                      );
+                                    },
+                                  ),
+                          );
+                        },
+                      ),
+                    ],
 
                     const SizedBox(height: 16),
 
@@ -446,41 +504,5 @@ class _PaymentFormPageState extends State<PaymentFormPage> {
       );
       Navigator.of(context).pop();
     }
-  }
-
-  void _showDeleteConfirmation() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Ödeme Sil'),
-        content: Text(
-            '${widget.payment!.customerName} müşterisinin ${widget.payment!.amount.toStringAsFixed(0)} ₺ tutarındaki ödemesini silmek istediğinizden emin misiniz?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('İptal'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              try {
-                await context
-                    .read<PaymentProvider>()
-                    .deletePayment(widget.payment!.id);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Ödeme silindi')),
-                );
-                Navigator.of(context).pop();
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Hata: $e')),
-                );
-              }
-            },
-            child: const Text('Sil', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
   }
 }

@@ -1,18 +1,76 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
-import 'package:share_plus/share_plus.dart';
 
 class PdfService {
   static final PdfService _instance = PdfService._internal();
   factory PdfService() => _instance;
   PdfService._internal();
 
+  // Türkçe karakter desteği için font
+  pw.Font? _turkishFont;
+
+  // Font'u yükle
+  Future<void> _loadFont() async {
+    if (_turkishFont == null) {
+      // Türkçe karakterleri destekleyen fontları sırayla dene
+      final fontOptions = [
+        () => PdfGoogleFonts.notoSansRegular(),
+        () => PdfGoogleFonts.openSansRegular(),
+        () => PdfGoogleFonts.robotoRegular(),
+        () => PdfGoogleFonts.latoRegular(),
+        () => PdfGoogleFonts.sourceCodeProRegular(),
+      ];
+
+      for (int i = 0; i < fontOptions.length; i++) {
+        try {
+          _turkishFont = await fontOptions[i]();
+          print('✅ Font ${i + 1} yüklendi (Türkçe destekli)');
+          return;
+        } catch (e) {
+          print('⚠️ Font ${i + 1} yüklenemedi: $e');
+          continue;
+        }
+      }
+
+      print('❌ Hiçbir Türkçe font yüklenemedi, varsayılan font kullanılacak');
+      _turkishFont = null;
+    }
+  }
+
+  // Türkçe destekli TextStyle
+  pw.TextStyle _getTextStyle({
+    double fontSize = 12,
+    pw.FontWeight fontWeight = pw.FontWeight.normal,
+    PdfColor color = PdfColors.black,
+  }) {
+    // Eğer font yüklendiyse kullan, yoksa varsayılan
+    if (_turkishFont != null) {
+      return pw.TextStyle(
+        fontSize: fontSize,
+        fontWeight: fontWeight,
+        color: color,
+        font: _turkishFont,
+      );
+    } else {
+      // Varsayılan font ile fallback sistemi
+      return pw.TextStyle(
+        fontSize: fontSize,
+        fontWeight: fontWeight,
+        color: color,
+        // Türkçe karakterler için fallback
+        fontFallback: const [],
+      );
+    }
+  }
+
   // PDF oluşturma ve yazdırma
   Future<void> generateAndPrintPdf(pw.Document document) async {
+    await _loadFont(); // Font'u yükle
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat format) async => document.save(),
     );
@@ -20,34 +78,52 @@ class PdfService {
 
   // PDF'i dosyaya kaydetme
   Future<String> savePdfToFile(pw.Document document, String fileName) async {
-    final directory = await getApplicationDocumentsDirectory();
-    final file = File('${directory.path}/$fileName.pdf');
-    await file.writeAsBytes(await document.save());
-    return file.path;
+    await _loadFont(); // Font'u yükle
+
+    if (kIsWeb) {
+      // Web platformunda doğrudan paylaş
+      await Printing.sharePdf(
+        bytes: await document.save(),
+        filename: '$fileName.pdf',
+      );
+      return '$fileName.pdf'; // Web'de dosya yolu döndürmek anlamsız
+    } else {
+      // Mobil/Desktop platformlarda dosya kaydet
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/$fileName.pdf');
+      await file.writeAsBytes(await document.save());
+      return file.path;
+    }
   }
 
   // PDF'i paylaşma
   Future<void> sharePdf(pw.Document document, String fileName) async {
+    await _loadFont(); // Font'u yükle
     await Printing.sharePdf(
       bytes: await document.save(),
       filename: fileName,
     );
   }
 
-  // PDF'i dosya olarak oluşturup paylaşma
-  Future<void> createAndSharePdfFile(
+  // PDF'i dosya olarak oluşturup kaydetme
+  Future<String> createAndSavePdfFile(
       pw.Document document, String fileName) async {
-    // PDF'i geçici dosya olarak kaydet
-    final directory = await getTemporaryDirectory();
-    final file = File('${directory.path}/$fileName.pdf');
-    await file.writeAsBytes(await document.save());
+    await _loadFont(); // Font'u yükle
 
-    // Dosyayı paylaş
-    await Share.shareXFiles(
-      [XFile(file.path)],
-      text: 'PİNA Raporu: $fileName',
-      subject: 'PİNA Raporu - $fileName',
-    );
+    if (kIsWeb) {
+      // Web platformunda doğrudan paylaş
+      await Printing.sharePdf(
+        bytes: await document.save(),
+        filename: '$fileName.pdf',
+      );
+      return '$fileName.pdf'; // Web'de dosya yolu döndürmek anlamsız
+    } else {
+      // Mobil/Desktop platformlarda dosya kaydet
+      final directory = await getTemporaryDirectory();
+      final file = File('${directory.path}/$fileName.pdf');
+      await file.writeAsBytes(await document.save());
+      return file.path;
+    }
   }
 
   // Temel PDF sayfa formatı
@@ -68,7 +144,7 @@ class PdfService {
         children: [
           pw.Text(
             title,
-            style: pw.TextStyle(
+            style: _getTextStyle(
               fontSize: 20,
               fontWeight: pw.FontWeight.bold,
               color: PdfColors.blue900,
@@ -78,7 +154,7 @@ class PdfService {
             pw.SizedBox(height: 4),
             pw.Text(
               subtitle,
-              style: const pw.TextStyle(
+              style: _getTextStyle(
                 fontSize: 12,
                 color: PdfColors.blue700,
               ),
@@ -87,7 +163,7 @@ class PdfService {
           pw.SizedBox(height: 8),
           pw.Text(
             'Rapor Tarihi: ${DateFormat('dd.MM.yyyy HH:mm').format(DateTime.now())}',
-            style: const pw.TextStyle(
+            style: _getTextStyle(
               fontSize: 10,
               color: PdfColors.grey600,
             ),
@@ -110,7 +186,7 @@ class PdfService {
         children: [
           pw.Text(
             'Pina Sanat Atölyesi',
-            style: pw.TextStyle(
+            style: _getTextStyle(
               fontSize: 12,
               fontWeight: pw.FontWeight.bold,
               color: PdfColors.grey700,
@@ -118,7 +194,7 @@ class PdfService {
           ),
           pw.Text(
             'Sayfa: ',
-            style: const pw.TextStyle(
+            style: _getTextStyle(
               fontSize: 10,
               color: PdfColors.grey600,
             ),
@@ -141,7 +217,7 @@ class PdfService {
             .map((header) => pw.Expanded(
                   child: pw.Text(
                     header,
-                    style: pw.TextStyle(
+                    style: _getTextStyle(
                       fontSize: 12,
                       fontWeight: pw.FontWeight.bold,
                       color: PdfColors.blue900,
@@ -167,7 +243,7 @@ class PdfService {
             .map((cell) => pw.Expanded(
                   child: pw.Text(
                     cell,
-                    style: const pw.TextStyle(
+                    style: _getTextStyle(
                       fontSize: 10,
                       color: PdfColors.grey800,
                     ),
@@ -192,7 +268,7 @@ class PdfService {
         children: [
           pw.Text(
             value,
-            style: pw.TextStyle(
+            style: _getTextStyle(
               fontSize: 18,
               fontWeight: pw.FontWeight.bold,
               color: color,
@@ -201,7 +277,7 @@ class PdfService {
           pw.SizedBox(height: 4),
           pw.Text(
             title,
-            style: const pw.TextStyle(
+            style: _getTextStyle(
               fontSize: 12,
               color: PdfColors.grey700,
             ),
